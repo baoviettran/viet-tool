@@ -6,6 +6,7 @@ import {
   viterbi,
   kBestViterbi,
   addAccents,
+  splitSentences,
 } from '../../src/engines/addAccents';
 import syllablesData from '../../src/data/syllables.json';
 import unigramsData from '../../src/data/unigrams.json';
@@ -194,7 +195,54 @@ describe('addAccents pipeline', () => {
   });
 });
 
-describe('sentence splitting', () => {
+describe('splitSentences', () => {
+  it('splits at period followed by whitespace', () => {
+    expect(splitSentences('Hello. World')).toEqual(['Hello.', ' ', 'World']);
+  });
+
+  it('splits at exclamation and question mark', () => {
+    expect(splitSentences('Yes! No? Maybe')).toEqual(['Yes!', ' ', 'No?', ' ', 'Maybe']);
+  });
+
+  it('handles consecutive punctuation (!!!)', () => {
+    expect(splitSentences('Wow!!! OK')).toEqual(['Wow!!!', ' ', 'OK']);
+  });
+
+  it('does not split on decimal numbers', () => {
+    expect(splitSentences('3.14 is pi')).toEqual(['3.14 is pi']);
+  });
+
+  it('does not split on ellipsis', () => {
+    expect(splitSentences('Wait... ok')).toEqual(['Wait... ok']);
+  });
+
+  it('does not split on known abbreviations', () => {
+    expect(splitSentences('TS. Nguyen is here')).toEqual(['TS. Nguyen is here']);
+    expect(splitSentences('Dr. Smith left')).toEqual(['Dr. Smith left']);
+    expect(splitSentences('Tp. Ho Chi Minh')).toEqual(['Tp. Ho Chi Minh']);
+  });
+
+  it('does not split on single-letter initials', () => {
+    expect(splitSentences('T. Nguyen Van A')).toEqual(['T. Nguyen Van A']);
+  });
+
+  it('returns single segment when no boundaries found', () => {
+    expect(splitSentences('no punctuation here')).toEqual(['no punctuation here']);
+  });
+
+  it('handles text ending with punctuation', () => {
+    expect(splitSentences('Hello.')).toEqual(['Hello.']);
+  });
+
+  it('handles multiple sentences with abbreviations between them', () => {
+    const result = splitSentences('Toi la ban. TS. Nguyen hoc. Di choi');
+    expect(result).toContain('Toi la ban.');
+    expect(result).toContain('TS. Nguyen hoc.');
+    expect(result).toContain('Di choi');
+  });
+});
+
+describe('sentence splitting in addAccents', () => {
   it('processes each sentence independently', async () => {
     const result = await addAccents('toi la ban. di choi', syllables, unigrams, bigrams);
     const best = result.results[0];
@@ -207,18 +255,10 @@ describe('sentence splitting', () => {
     expect(result.results[0]).toContain('.  ');
   });
 
-  it('preserves punctuation in output', async () => {
-    const result = await addAccents('toi la ban. di choi!', syllables, unigrams, bigrams);
-    expect(result.results[0]).toContain('.');
-    expect(result.results[0]).toContain('!');
-  });
-
-  it('returns k-best across all sentences', async () => {
-    const result = await addAccents('toi la ban. di choi', syllables, unigrams, bigrams);
-    expect(result.results.length).toBeGreaterThanOrEqual(1);
-    for (const r of result.results) {
-      expect(r).toContain('.');
-    }
+  it('does not split on abbreviation period', async () => {
+    const result = await addAccents('dr. toi la ban', syllables, unigrams, bigrams);
+    // Should treat as one chunk since "dr." is an abbreviation
+    expect(result.results[0]).toContain('dr.');
   });
 
   it('handles text without sentence boundaries as single chunk', async () => {

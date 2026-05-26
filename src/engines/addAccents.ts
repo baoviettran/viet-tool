@@ -235,6 +235,65 @@ function processChunk(
   return { results, scores: kResults.map((r) => r.score), lowConfidence };
 }
 
+const ABBREVIATIONS = new Set([
+  'ts', 'gs', 'pgs', 'ths', 'ks', 'nk', 'đh', 'cđ',
+  'tp', 'tx', 'p', 'q', 'tt', 'bh', 'etc',
+  'dr', 'mr', 'mrs', 'ms', 'prof', 'vs', 'st', 'ave',
+  'anh', 'chị', 'ông', 'bà', 'cô', 'chú', 'dì', 'thím',
+  'sr', 'jr', 'gen', 'col', 'lt', 'capt', 'sgt', 'rep', 'sen',
+]);
+
+export function splitSentences(text: string): string[] {
+  const segments: string[] = [];
+  let segStart = 0;
+  let i = 0;
+
+  while (i < text.length) {
+    if (!'.!?'.includes(text[i])) { i++; continue; }
+
+    // Find end of consecutive punctuation (!!!, ?!, etc.)
+    let punctEnd = i + 1;
+    while (punctEnd < text.length && '.!?'.includes(text[punctEnd])) punctEnd++;
+
+    // Must be followed by whitespace to be a boundary
+    if (punctEnd >= text.length || !/\s/.test(text[punctEnd])) { i = punctEnd; continue; }
+
+    // Ellipsis: don't split
+    if (punctEnd - i >= 2 && text[i] === '.' && text[i + 1] === '.') { i = punctEnd; continue; }
+
+    // Period after digit: decimal, don't split
+    if (text[i] === '.' && i > 0 && /\d/.test(text[i - 1])) { i = punctEnd; continue; }
+
+    // Period after abbreviation: don't split
+    if (text[i] === '.') {
+      // Extract word immediately before the period
+      let wordEnd = i;
+      while (wordEnd > 0 && /\s/.test(text[wordEnd - 1])) wordEnd--;
+      let wordStart = wordEnd;
+      while (wordStart > 0 && /[^\s]/.test(text[wordStart - 1])) wordStart--;
+      const word = text.slice(wordStart, wordEnd).toLowerCase();
+
+      // Single letter initial (e.g., "T. Nguyễn")
+      if (word.length === 1 && /[a-zà-ỹđ]/.test(word)) { i = punctEnd; continue; }
+
+      // Known abbreviation
+      if (ABBREVIATIONS.has(word)) { i = punctEnd; continue; }
+    }
+
+    // This is a real sentence boundary — find end of whitespace
+    let wsEnd = punctEnd;
+    while (wsEnd < text.length && /\s/.test(text[wsEnd])) wsEnd++;
+
+    segments.push(text.slice(segStart, punctEnd));
+    if (wsEnd > punctEnd) segments.push(text.slice(punctEnd, wsEnd));
+    segStart = wsEnd;
+    i = wsEnd;
+  }
+
+  if (segStart < text.length) segments.push(text.slice(segStart));
+  return segments.length > 1 ? segments : [text];
+}
+
 export async function addAccents(
   text: string,
   syllableMap: SyllableMap,
@@ -244,12 +303,7 @@ export async function addAccents(
 ): Promise<AccentResult> {
   if (!text.trim()) return { results: [], scores: [], lowConfidence: false };
 
-  // Split into sentences at sentence-ending punctuation, preserving separators.
-  // Note: this also splits on non-sentence periods (abbreviations like "Dr.",
-  // ellipsis, decimal numbers). Each fragment is still processed correctly by
-  // Viterbi, but bigram context resets at these false boundaries. Acceptable
-  // for MVP; a smarter boundary detector can be added later.
-  const segments = text.split(/((?<=[.!?])\s+)/);
+  const segments = splitSentences(text);
 
   // Single segment (no sentence boundaries) — process directly
   if (segments.length <= 1) {

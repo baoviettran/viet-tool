@@ -100,7 +100,13 @@ Trigrams are excluded from the initial build. If accuracy testing shows bigrams 
 
 **Multi-answer output:** The engine returns the top 3 interpretations ranked by Viterbi score. "toi la ban" → #1 "tôi là bạn" (I am your friend), #2 "tối la bạn" (less likely), #3 etc. User picks the correct one for their context.
 
-**Sentence splitting:** Input text is split into sentences at punctuation boundaries (`.` `!` `?` followed by whitespace) before processing. Each sentence runs through Viterbi independently, so bigram context resets at sentence boundaries — the first syllable of a new sentence is not scored against the last syllable of the previous one. Results are reassembled by joining the ith-best result from each sentence, with scores summed across sentences.
+**Sentence splitting:** Input text is split into sentences using a context-aware boundary detector before processing. The detector avoids splitting on:
+- **Abbreviations** — known Vietnamese and English abbreviations (TS., Dr., Tp., etc.)
+- **Single-letter initials** — e.g., "T. Nguyễn"
+- **Decimal numbers** — e.g., "3.14"
+- **Ellipsis** — e.g., "..."
+
+Each sentence runs through Viterbi independently, so bigram context resets at true sentence boundaries. Results are reassembled by joining the ith-best result from each sentence, with scores summed across sentences.
 
 **Short input handling (≤ 3 syllables):** Bigram context is too weak for very short inputs. For 1-syllable inputs, show all possible accented forms. For 2-3 syllable inputs, show the top 3 Viterbi results but flag them as "low confidence" — the UI indicates these are best guesses with limited context.
 
