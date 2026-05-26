@@ -244,7 +244,11 @@ export async function addAccents(
 ): Promise<AccentResult> {
   if (!text.trim()) return { results: [], scores: [], lowConfidence: false };
 
-  // Split into sentences at sentence-ending punctuation, preserving separators
+  // Split into sentences at sentence-ending punctuation, preserving separators.
+  // Note: this also splits on non-sentence periods (abbreviations like "Dr.",
+  // ellipsis, decimal numbers). Each fragment is still processed correctly by
+  // Viterbi, but bigram context resets at these false boundaries. Acceptable
+  // for MVP; a smarter boundary detector can be added later.
   const segments = text.split(/((?<=[.!?])\s+)/);
 
   // Single segment (no sentence boundaries) — process directly

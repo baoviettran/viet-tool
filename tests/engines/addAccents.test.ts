@@ -182,6 +182,16 @@ describe('addAccents pipeline', () => {
     const result = await addAccents('', syllables, unigrams, bigrams);
     expect(result.results).toEqual([]);
   });
+
+  it('preserves uppercase first letter from input', async () => {
+    const result = await addAccents('Toi la ban', syllables, unigrams, bigrams);
+    expect(result.results[0]).toBe('Tôi là bạn');
+  });
+
+  it('handles all-lowercase input unchanged', async () => {
+    const result = await addAccents('toi la ban', syllables, unigrams, bigrams);
+    expect(result.results[0]).toBe('tôi là bạn');
+  });
 });
 
 describe('sentence splitting', () => {
