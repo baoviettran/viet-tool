@@ -183,3 +183,36 @@ describe('addAccents pipeline', () => {
     expect(result.results).toEqual([]);
   });
 });
+
+describe('sentence splitting', () => {
+  it('processes each sentence independently', async () => {
+    const result = await addAccents('toi la ban. di choi', syllables, unigrams, bigrams);
+    const best = result.results[0];
+    expect(best).toContain('tôi là bạn');
+    expect(best).toContain('đi chơi');
+  });
+
+  it('preserves inter-sentence whitespace', async () => {
+    const result = await addAccents('toi la ban.  di choi', syllables, unigrams, bigrams);
+    expect(result.results[0]).toContain('.  ');
+  });
+
+  it('preserves punctuation in output', async () => {
+    const result = await addAccents('toi la ban. di choi!', syllables, unigrams, bigrams);
+    expect(result.results[0]).toContain('.');
+    expect(result.results[0]).toContain('!');
+  });
+
+  it('returns k-best across all sentences', async () => {
+    const result = await addAccents('toi la ban. di choi', syllables, unigrams, bigrams);
+    expect(result.results.length).toBeGreaterThanOrEqual(1);
+    for (const r of result.results) {
+      expect(r).toContain('.');
+    }
+  });
+
+  it('handles text without sentence boundaries as single chunk', async () => {
+    const result = await addAccents('toi la ban di choi', syllables, unigrams, bigrams);
+    expect(result.results[0]).toBe('tôi là bạn đi chơi');
+  });
+});

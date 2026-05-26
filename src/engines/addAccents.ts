@@ -159,41 +159,32 @@ export function kBestViterbi(
   return results;
 }
 
-export async function addAccents(
+interface TokenInfo {
+  text: string;
+  isVietnamese: boolean;
+  partIndex: number;
+  subIndex: number;
+}
+
+function processChunk(
   text: string,
   syllableMap: SyllableMap,
   unigrams: UnigramMap,
   bigrams: BigramMap,
-  k: number = 3
-): Promise<AccentResult> {
-  if (!text.trim()) return { results: [], scores: [], lowConfidence: false };
+  k: number
+): AccentResult {
+  if (!text.trim()) return { results: [text], scores: [0], lowConfidence: false };
 
-  // Split by whitespace to preserve original spacing
   const whitespaceParts = text.split(/(\s+)/);
-
-  // For each non-whitespace part, split into sub-tokens (alpha vs non-alpha)
-  // and build a flat list with position info so we can reconstruct
-  interface TokenInfo {
-    text: string;
-    isVietnamese: boolean;
-    partIndex: number;       // index into whitespaceParts
-    subIndex: number;        // index within the sub-token match array
-  }
 
   const allTokens: TokenInfo[] = [];
   for (let pi = 0; pi < whitespaceParts.length; pi++) {
     const part = whitespaceParts[pi];
-    if (/^\s+$/.test(part)) continue;
-    if (!part) continue;
+    if (/^\s+$/.test(part) || !part) continue;
     const subTokens = part.match(/[a-zA-ZÀ-ỹđĐ]+|[^a-zA-ZÀ-ỹđĐ]+/g) ?? [part];
     for (let si = 0; si < subTokens.length; si++) {
       const token = subTokens[si];
-      allTokens.push({
-        text: token,
-        isVietnamese: isVietnameseSyllable(token),
-        partIndex: pi,
-        subIndex: si,
-      });
+      allTokens.push({ text: token, isVietnamese: isVietnameseSyllable(token), partIndex: pi, subIndex: si });
     }
   }
 
@@ -205,7 +196,6 @@ export async function addAccents(
 
   if (vietnameseTokens.length === 1) {
     const candidates = lookupCandidates(vietnameseTokens[0].text, syllableMap);
-    // For single token, replace just that token in the original text
     const results = candidates.map((c) => {
       const parts = [...whitespaceParts];
       const vt = vietnameseTokens[0];
@@ -220,10 +210,10 @@ export async function addAccents(
 
   const candidateArrays: string[][] = [];
   const vietnameseTokenList: TokenInfo[] = [];
-  for (let i = 0; i < allTokens.length; i++) {
-    if (allTokens[i].isVietnamese) {
-      candidateArrays.push(lookupCandidates(allTokens[i].text, syllableMap));
-      vietnameseTokenList.push(allTokens[i]);
+  for (const token of allTokens) {
+    if (token.isVietnamese) {
+      candidateArrays.push(lookupCandidates(token.text, syllableMap));
+      vietnameseTokenList.push(token);
     }
   }
 
@@ -243,4 +233,57 @@ export async function addAccents(
   });
 
   return { results, scores: kResults.map((r) => r.score), lowConfidence };
+}
+
+export async function addAccents(
+  text: string,
+  syllableMap: SyllableMap,
+  unigrams: UnigramMap,
+  bigrams: BigramMap,
+  k: number = 3
+): Promise<AccentResult> {
+  if (!text.trim()) return { results: [], scores: [], lowConfidence: false };
+
+  // Split into sentences at sentence-ending punctuation, preserving separators
+  const segments = text.split(/((?<=[.!?])\s+)/);
+
+  // Single segment (no sentence boundaries) — process directly
+  if (segments.length <= 1) {
+    return processChunk(text, syllableMap, unigrams, bigrams, k);
+  }
+
+  // Process each segment independently
+  const processed: AccentResult[] = segments.map((seg) => {
+    if (/^\s*$/.test(seg)) {
+      return { results: [seg], scores: [0], lowConfidence: false };
+    }
+    return processChunk(seg, syllableMap, unigrams, bigrams, k);
+  });
+
+  // Count total Vietnamese tokens across all segments for lowConfidence
+  let totalVietnamese = 0;
+  for (const seg of segments) {
+    if (!/^\s*$/.test(seg)) {
+      const tokens = tokenizeSyllables(seg);
+      totalVietnamese += tokens.filter((t) => t.isVietnamese).length;
+    }
+  }
+
+  // Combine k-best: for each rank, join the ith result from each segment
+  const minK = Math.min(k, ...processed.map((p) => p.results.length || 1));
+  const results: string[] = [];
+  const scores: number[] = [];
+
+  for (let rank = 0; rank < minK; rank++) {
+    let combined = '';
+    let totalScore = 0;
+    for (const p of processed) {
+      combined += p.results[rank] ?? p.results[0] ?? '';
+      totalScore += p.scores[rank] ?? 0;
+    }
+    results.push(combined);
+    scores.push(totalScore);
+  }
+
+  return { results, scores, lowConfidence: totalVietnamese <= 3 };
 }
