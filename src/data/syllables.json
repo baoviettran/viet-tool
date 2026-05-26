@@ -1,0 +1,14 @@
+{
+  "toi": ["tôi", "tối", "tội", "tồi", "tỏi"],
+  "la": ["là", "lá", "lả", "lã", "lạ", "la"],
+  "ban": ["bạn", "ban", "bàn", "bán", "bản"],
+  "di": ["đi", "dị", "di", "dì", "dí"],
+  "choi": ["chơi", "chói", "chời", "chọi"],
+  "hoc": ["học", "hoc", "hóc"],
+  "sinh": ["sinh", "sính"],
+  "vien": ["viên", "viền", "viễn", "viện"],
+  "mot": ["một", "mốt", "mọt"],
+  "nguoi": ["người"],
+  "khong": ["không", "khóng", "khòng"],
+  "cam": ["cảm", "cấm", "căm", "cầm", "cám", "cam"]
+}
