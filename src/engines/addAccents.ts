@@ -33,14 +33,18 @@ function hasVietnameseDiacritics(text: string): boolean {
   return /[À-ỹđĐ]/.test(text);
 }
 
+function applyCasing(original: string, replacement: string): string {
+  if (original[0] === original[0].toUpperCase() && original[0] !== original[0].toLowerCase()) {
+    return replacement[0].toUpperCase() + replacement.slice(1);
+  }
+  return replacement;
+}
+
 export function lookupCandidates(syllable: string, syllableMap: SyllableMap): string[] {
   if (hasVietnameseDiacritics(syllable)) return [syllable];
   const lower = syllable.toLowerCase();
   const candidates = syllableMap[lower];
   if (!candidates) return [syllable];
-  if (syllable[0] === syllable[0].toUpperCase()) {
-    return candidates.map((c) => c[0].toUpperCase() + c.slice(1));
-  }
   return candidates;
 }
 
@@ -204,11 +208,10 @@ export async function addAccents(
     // For single token, replace just that token in the original text
     const results = candidates.map((c) => {
       const parts = [...whitespaceParts];
-      // Find which whitespace part and rebuild it
       const vt = vietnameseTokens[0];
       const originalPart = parts[vt.partIndex];
       const subs = originalPart.match(/[a-zA-ZÀ-ỹđĐ]+|[^a-zA-ZÀ-ỹđĐ]+/g) ?? [originalPart];
-      subs[vt.subIndex] = c;
+      subs[vt.subIndex] = applyCasing(vt.text, c);
       parts[vt.partIndex] = subs.join('');
       return parts.join('');
     });
@@ -229,12 +232,11 @@ export async function addAccents(
 
   const results: string[] = kResults.map((r) => {
     const parts = [...whitespaceParts];
-    // Group replacements by partIndex to rebuild each part correctly
     for (let vi = 0; vi < vietnameseTokenList.length; vi++) {
       const vt = vietnameseTokenList[vi];
       const originalPart = parts[vt.partIndex];
       const subs = originalPart.match(/[a-zA-ZÀ-ỹđĐ]+|[^a-zA-ZÀ-ỹđĐ]+/g) ?? [originalPart];
-      subs[vt.subIndex] = r.path[vi];
+      subs[vt.subIndex] = applyCasing(vt.text, r.path[vi]);
       parts[vt.partIndex] = subs.join('');
     }
     return parts.join('');

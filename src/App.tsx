@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Header } from './components/Header';
 import { TextInput } from './components/TextInput';
 import { TextOutput } from './components/TextOutput';
@@ -17,6 +17,16 @@ const syllables = syllablesData as SyllableMap;
 const unigrams = unigramsData as UnigramMap;
 const bigrams = bigramsData as BigramMap;
 
+const WORKER_IDLE_MS = 5 * 60 * 1000;
+
+function generateId(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+}
+
 function App() {
   const { t } = useTranslation();
   const [input, setInput] = useState('');
@@ -25,6 +35,34 @@ function App() {
   const [scores, setScores] = useState<number[]>([]);
   const [lowConfidence, setLowConfidence] = useState(false);
   const [warning, setWarning] = useState('');
+
+  const workerRef = useRef<Worker | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      workerRef.current?.terminate();
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, []);
+
+  function getWorker(): Worker {
+    if (workerRef.current) return workerRef.current;
+    const w = new Worker(
+      new URL('./engines/worker.ts', import.meta.url),
+      { type: 'module' }
+    );
+    workerRef.current = w;
+    return w;
+  }
+
+  function resetIdleTimer() {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    }, WORKER_IDLE_MS);
+  }
 
   const handleRemoveAccents = useCallback(() => {
     setOutput(removeAccents(input));
@@ -39,11 +77,9 @@ function App() {
       const syllableCount = input.trim().split(/\s+/).length;
 
       if (syllableCount > 10 && typeof Worker !== 'undefined') {
-        const worker = new Worker(
-          new URL('./engines/worker.ts', import.meta.url),
-          { type: 'module' }
-        );
-        const id = crypto.randomUUID();
+        const worker = getWorker();
+        const id = generateId();
+        resetIdleTimer();
 
         worker.onmessage = (e) => {
           const msg = e.data as WorkerResponse;
@@ -51,21 +87,21 @@ function App() {
             setOutput(msg.payload.results[0] ?? null);
             setAlternatives(msg.payload.results.slice(1));
             setScores(msg.payload.scores);
-            setLowConfidence(syllableCount <= 3);
+            setLowConfidence(msg.payload.lowConfidence);
             setWarning('');
-            worker.terminate();
+            resetIdleTimer();
           }
           if (msg.type === 'ERROR' && msg.id === id) {
             setOutput(null);
             setWarning(t('errorProcessing'));
-            worker.terminate();
+            resetIdleTimer();
           }
         };
 
         worker.postMessage({
           type: 'ADD_ACCENTS',
           id,
-          payload: { syllables: input.trim().split(/\s+/), k: 3 },
+          payload: { text: input, k: 3 },
         });
       } else {
         const result: AccentResult = await addAccents(input, syllables, unigrams, bigrams);

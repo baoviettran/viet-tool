@@ -4,15 +4,17 @@ import type { WorkerRequest, WorkerResponse, SyllableMap, UnigramMap, BigramMap 
 let syllablesData: SyllableMap | null = null;
 let unigramsData: UnigramMap | null = null;
 let bigramsData: BigramMap | null = null;
+let dataLoaded = false;
 
 async function loadData() {
-  if (bigramsData) return;
+  if (dataLoaded) return;
   const syllablesModule = await import('../data/syllables.json');
   const unigramsModule = await import('../data/unigrams.json');
   const bigramsModule = await import('../data/bigrams.json');
   syllablesData = syllablesModule.default as SyllableMap;
   unigramsData = unigramsModule.default as UnigramMap;
   bigramsData = bigramsModule.default as BigramMap;
+  dataLoaded = true;
 }
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
@@ -22,7 +24,7 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
     try {
       await loadData();
       const result = await addAccents(
-        msg.payload.syllables.join(' '),
+        msg.payload.text,
         syllablesData!,
         unigramsData!,
         bigramsData!,
@@ -31,7 +33,7 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
       const response: WorkerResponse = {
         type: 'RESULT',
         id: msg.id,
-        payload: { results: result.results, scores: result.scores },
+        payload: { results: result.results, scores: result.scores, lowConfidence: result.lowConfidence },
       };
       self.postMessage(response);
     } catch (err) {

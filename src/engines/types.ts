@@ -7,13 +7,13 @@ export interface AccentResult {
 export interface WorkerRequest {
   type: 'ADD_ACCENTS';
   id: string;
-  payload: { syllables: string[]; k: number };
+  payload: { text: string; k: number };
 }
 
 export interface WorkerResultResponse {
   type: 'RESULT';
   id: string;
-  payload: { results: string[]; scores: number[] };
+  payload: { results: string[]; scores: number[]; lowConfidence: boolean };
 }
 
 export interface WorkerErrorResponse {
