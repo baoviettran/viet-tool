@@ -6,7 +6,7 @@ import { ActionBar } from './components/ActionBar';
 import { removeAccents } from './engines/removeAccents';
 import { addAccents } from './engines/addAccents';
 import { expandAbbreviations } from './engines/expandAbbrev';
-import type { AccentResult, SyllableMap, UnigramMap, BigramMap } from './engines/types';
+import type { AccentResult, SyllableMap, UnigramMap, BigramMap, WorkerResponse } from './engines/types';
 import syllablesData from './data/syllables.json';
 import unigramsData from './data/unigrams.json';
 import bigramsData from './data/bigrams.json';
@@ -36,12 +36,45 @@ function App() {
 
   const handleAddAccents = useCallback(async () => {
     try {
-      const result: AccentResult = await addAccents(input, syllables, unigrams, bigrams);
-      setOutput(result.results[0] ?? null);
-      setAlternatives(result.results.slice(1));
-      setScores(result.scores);
-      setLowConfidence(result.lowConfidence);
-      setWarning('');
+      const syllableCount = input.trim().split(/\s+/).length;
+
+      if (syllableCount > 10 && typeof Worker !== 'undefined') {
+        const worker = new Worker(
+          new URL('./engines/worker.ts', import.meta.url),
+          { type: 'module' }
+        );
+        const id = crypto.randomUUID();
+
+        worker.onmessage = (e) => {
+          const msg = e.data as WorkerResponse;
+          if (msg.type === 'RESULT' && msg.id === id) {
+            setOutput(msg.payload.results[0] ?? null);
+            setAlternatives(msg.payload.results.slice(1));
+            setScores(msg.payload.scores);
+            setLowConfidence(syllableCount <= 3);
+            setWarning('');
+            worker.terminate();
+          }
+          if (msg.type === 'ERROR' && msg.id === id) {
+            setOutput(null);
+            setWarning(t('errorProcessing'));
+            worker.terminate();
+          }
+        };
+
+        worker.postMessage({
+          type: 'ADD_ACCENTS',
+          id,
+          payload: { syllables: input.trim().split(/\s+/), k: 3 },
+        });
+      } else {
+        const result: AccentResult = await addAccents(input, syllables, unigrams, bigrams);
+        setOutput(result.results[0] ?? null);
+        setAlternatives(result.results.slice(1));
+        setScores(result.scores);
+        setLowConfidence(result.lowConfidence);
+        setWarning('');
+      }
     } catch {
       setOutput(null);
       setWarning(t('errorProcessing'));
