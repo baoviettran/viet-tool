@@ -1,0 +1,17 @@
+{
+  "appTitle": "Vietnamese Text Tool",
+  "appSubtitle": "Transform accents & abbreviations",
+  "inputPlaceholder": "Type or paste Vietnamese text here...",
+  "outputPlaceholder": "Result will appear here...",
+  "removeAccents": "Remove Accents",
+  "addAccents": "Add Accents",
+  "expandAbbreviations": "Expand Abbreviations",
+  "copy": "Copy",
+  "copied": "Copied!",
+  "showAlternatives": "Show {count} alternatives",
+  "hideAlternatives": "Hide alternatives",
+  "lowConfidence": "Low confidence — limited context",
+  "notReversible": "Removing accents is not perfectly reversible",
+  "errorProcessing": "Error processing text",
+  "language": "EN"
+}

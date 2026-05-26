@@ -1,0 +1,17 @@
+{
+  "appTitle": "Công Cụ Tiếng Việt",
+  "appSubtitle": "Chuyển đổi dấu & viết tắt",
+  "inputPlaceholder": "Nhập hoặc dán văn bản tiếng Việt...",
+  "outputPlaceholder": "Kết quả sẽ hiển thị ở đây...",
+  "removeAccents": "Bỏ Dấu",
+  "addAccents": "Thêm Dấu",
+  "expandAbbreviations": "Mở Rộng Viết Tắt",
+  "copy": "Sao chép",
+  "copied": "Đã sao chép!",
+  "showAlternatives": "Hiện {count} kết quả khác",
+  "hideAlternatives": "Ẩn kết quả khác",
+  "lowConfidence": "Độ tin cậy thấp — thiếu ngữ cảnh",
+  "notReversible": "Bỏ dấu không thể hoàn nguyên hoàn toàn",
+  "errorProcessing": "Lỗi xử lý văn bản",
+  "language": "VI"
+}
