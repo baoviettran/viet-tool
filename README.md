@@ -1,73 +1,67 @@
-# React + TypeScript + Vite
+# Vietnamese Text Tool
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A client-side web app for transforming Vietnamese text — removing accents, restoring accents, and expanding texting abbreviations. All processing runs in the browser with zero backend.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Remove Accents** — Strip Vietnamese diacritics (Tiếng Việt → Tieng Viet)
+- **Add Accents** — Restore accents using Viterbi algorithm with bigram context (Tieng Viet → Tiếng Việt)
+- **Expand Abbreviations** — Expand texting shorthand (k → không, j → gì, thik → thích)
+- **Multiple interpretations** — Accent restoration shows top 3 results when ambiguous
+- **English/Vietnamese UI** — Toggle between languages
+- **Dark/Light theme** — Auto-detects OS preference with manual override
 
-## React Compiler
+## How it works
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Accent restoration
 
-## Expanding the ESLint configuration
+The core algorithm uses **Viterbi dynamic programming** over a Hidden Markov Model at the syllable level. Each unaccented syllable has multiple possible accented forms (e.g., "la" → là/lá/lả/lã/lạ). The algorithm finds the most probable accented sequence using bigram frequency data from Vietnamese Wikipedia.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Key design decisions:
+- **Syllable-level** processing (not word-level) — Vietnamese syllables are the atomic unit
+- **Sentence splitting** — Text is split at true sentence boundaries (avoiding abbreviations, decimals, ellipsis) so bigram context resets correctly between sentences
+- **K-best Viterbi** — Returns top 3 interpretations for ambiguous inputs
+- **Web Worker** — Long inputs (>10 syllables) process off the main thread
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Abbreviation expansion
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Two-phase approach: exact match via Trie lookup, then fuzzy fallback using Levenshtein distance (max 2 edits). Only expands when a single unambiguous match exists.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting started
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm test` | Run all tests |
+| `npm run build` | Production build |
+| `npm run lint` | Run ESLint |
+
+## Building language data
+
+The accent restoration engine uses syllable, unigram, and bigram data derived from Vietnamese Wikipedia:
+
+```bash
+npx tsx scripts/build-data.ts path/to/viwiki-latest-pages-articles.xml
 ```
+
+This generates `src/data/syllables.json`, `unigrams.json`, and `bigrams.json`. Sample data is included for development.
+
+## Tech stack
+
+- React 19 + TypeScript + Vite
+- Vitest + React Testing Library
+- No UI framework — plain CSS with custom properties
+- No backend — all processing in the browser
+
+## License
+
+MIT
