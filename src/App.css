@@ -1,1 +1,492 @@
+/* ============================================================
+   Vietnamese Text Tool — Typographic Workshop Stylesheet
+   ============================================================ */
 
+/* --- Google Font fallbacks (loaded via index.html) --- */
+:root {
+  --font-heading: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-body: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, Consolas, monospace;
+
+  /* Light theme */
+  --bg: #faf8f5;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --text-secondary: #5a5650;
+  --accent: #c23616;
+  --accent-hover: #a82d14;
+  --accent-light: rgba(194, 54, 22, 0.08);
+  --border: #e0dcd6;
+  --border-focus: #c23616;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --warning-bg: #fff8e1;
+  --warning-text: #8a6d00;
+  --warning-border: #ffe082;
+  --badge-bg: #fff3e0;
+  --badge-text: #e65100;
+  --badge-border: #ffb74d;
+  --selected-bg: #fff1ed;
+  --selected-border: #c23616;
+
+  /* Paper grain texture */
+  --grain-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+
+  font-family: var(--font-body);
+  color: var(--text);
+  background-color: var(--bg);
+  background-image: var(--grain-svg);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Dark theme --- */
+[data-theme='dark'] {
+  --bg: #121212;
+  --surface: #1e1e1e;
+  --text: #e8e4df;
+  --text-secondary: #a09890;
+  --accent: #e85d3a;
+  --accent-hover: #f47052;
+  --accent-light: rgba(232, 93, 58, 0.12);
+  --border: #2e2e2e;
+  --border-focus: #e85d3a;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --warning-bg: #2a2300;
+  --warning-text: #ffd54f;
+  --warning-border: #5d4e00;
+  --badge-bg: #331800;
+  --badge-text: #ffab40;
+  --badge-border: #6d3a00;
+  --selected-bg: #2a1810;
+  --selected-border: #e85d3a;
+
+  --grain-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* --- App Container --- */
+.app-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+}
+
+/* --- Header --- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-diacritic {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+  animation: diacritic-fade-in 0.6s ease-out;
+}
+
+@keyframes diacritic-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.header-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+}
+
+.header-controls {
+  display: flex;
+  gap: 8px;
+}
+
+/* --- Toggle Button (shared) --- */
+.toggle-btn {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.toggle-btn:hover {
+  border-color: var(--text-secondary);
+  background: var(--accent-light);
+}
+
+.toggle-btn:active {
+  transform: scale(0.97);
+}
+
+/* --- Main Content --- */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* --- Panels (two-column grid) --- */
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Text Input --- */
+.text-input {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.text-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.text-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* --- Text Output --- */
+.text-output {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.output-area-wrapper {
+  position: relative;
+}
+
+.output-area {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical;
+  outline: none;
+}
+
+.output-area::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* --- Low Confidence Badge --- */
+.low-confidence-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  border: 1px solid var(--badge-border);
+  pointer-events: none;
+}
+
+/* --- Output Actions --- */
+.output-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Copy Button --- */
+.copy-btn {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.copy-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.copy-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.copy-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Alternatives Toggle --- */
+.alternatives-toggle {
+  font-size: 0.75rem;
+}
+
+/* --- Alternatives List --- */
+.alternatives-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.alternative-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.alternative-item:hover {
+  background: var(--accent-light);
+  border-color: var(--text-secondary);
+}
+
+.alternative-item.selected {
+  background: var(--selected-bg);
+  border-color: var(--selected-border);
+}
+
+.alternative-rank {
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 24px;
+  font-size: 0.8rem;
+}
+
+.alternative-text {
+  flex: 1;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.alternative-score {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Action Bar --- */
+.action-bar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.action-btn {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 12px 28px;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.01em;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.action-btn:active:not(:disabled) {
+  transform: scale(0.97);
+  box-shadow: var(--shadow-sm);
+}
+
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+[data-theme='dark'] .action-btn {
+  color: #ffffff;
+}
+
+/* --- Warning Text --- */
+.warning-text {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  text-align: center;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 0 16px 32px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 0;
+  }
+
+  .panels {
+    grid-template-columns: 1fr;
+  }
+
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .header-title {
+    font-size: 1.25rem;
+  }
+
+  .header-diacritic {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-controls {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .output-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .copy-btn,
+  .alternatives-toggle {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* --- Scrollbar styling --- */
+.alternatives-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.alternatives-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.alternatives-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.alternatives-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}

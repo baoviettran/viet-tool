@@ -14,14 +14,14 @@ export function createTrie(abbreviations: AbbrevMap) {
       if (!node.children.has(ch)) {
         node.children.set(ch, { children: new Map(), value: null });
       }
-      node = node.children.get(ch)!;
+      node = node.children.get(ch) as TrieNode;
     }
     node.value = val;
   }
 
   return {
     exactLookup(word: string): string | null {
-      let node = root;
+      let node: TrieNode | undefined = root;
       for (const ch of word.toLowerCase()) {
         node = node.children.get(ch);
         if (!node) return null;
