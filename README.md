@@ -1,4 +1,4 @@
-# Vietnamese Text Tool
+# VietTool
 
 A client-side web app for transforming Vietnamese text — removing accents, restoring accents, and expanding texting abbreviations. All processing runs in the browser with zero backend.
 

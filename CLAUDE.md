@@ -1,4 +1,4 @@
-# CLAUDE.md
+# CLAUDE.md — VietTool
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -14,7 +14,7 @@ npm run lint         # ESLint
 
 ## Architecture
 
-Client-side Vietnamese text tool with three transformation engines, a Web Worker, i18n, and theming. Zero backend.
+VietTool — a client-side Vietnamese text tool with three transformation engines, a Web Worker, i18n, and theming. Zero backend.
 
 ### Engines (`src/engines/`)
 
