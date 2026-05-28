@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync, createReadStream } from 'fs';
+import { writeFileSync, mkdirSync, createReadStream, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createInterface } from 'readline';
@@ -124,6 +124,19 @@ async function main() {
   }
 
   console.log(`Processed ${articleCount} articles, ${counts.totalSyllables} syllables`);
+
+  // Process supplement file with heavy weight to boost common conversational patterns
+  const SUPPLEMENT_WEIGHT = 5000;
+  const supplementPath = join(OUTPUT_DIR, 'supplement.txt');
+  try {
+    const supplementText = readFileSync(supplementPath, 'utf-8');
+    for (let i = 0; i < SUPPLEMENT_WEIGHT; i++) {
+      processText(supplementText, counts);
+    }
+    console.log(`Applied supplement with weight ${SUPPLEMENT_WEIGHT}`);
+  } catch {
+    console.log('No supplement.txt found, skipping');
+  }
 
   // Prune: keep only unigrams seen >= MIN_COUNT times
   const MIN_UNIGRAM = 50;
